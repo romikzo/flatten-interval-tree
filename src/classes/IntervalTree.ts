@@ -478,22 +478,23 @@ class IntervalTree<V = unknown> {
      * @returns nearest forward node or null
      */
     tree_search_nearest_forward(node: Node<V> | null, search_node: Node<V>): Node<V> | null {
+        const intersection = this.tree_search_first_interval(node, search_node);
+
+        if (intersection !== null) {
+            return intersection;
+        }
+
         let best: Node<V> | null = null;
         let curr = node;
         while (curr && curr !== this.nil_node) {
             if (curr.less_than(search_node)) {
-                if (curr.intersect(search_node)) {
-                    best = curr;
-                    curr = curr.left;
-                } else {
-                    curr = curr.right;
-                }
+                curr = curr.right;
             } else {
                 if (!best || curr.less_than(best)) best = curr;
                 curr = curr.left;
             }
         }
-        return best || null;
+        return best;
     }
 
     /**
@@ -514,6 +515,29 @@ class IntervalTree<V = unknown> {
                 this.tree_search_interval(node.right, search_node, res);
             }
         }
+    }
+
+    /**
+     * Search first lowest interval intersecting given interval (the same as tree_search_intervals, but for a single interval)
+     * @param node - starting node
+     * @param search_node - search interval as node
+     * @return either found interval or null
+     */
+    tree_search_first_interval(node: Node<V> | null, search_node: Node<V>): Node<V> | null {
+        if (node != null && node !== this.nil_node) {
+            if (node.left !== this.nil_node && !node.not_intersect_left_subtree(search_node)) {
+                const left_match = this.tree_search_first_interval(node.left, search_node);
+                if (left_match) return left_match
+            }
+            if (node.intersect(search_node)) {
+                return node;
+            }
+            if (node.right !== this.nil_node && !node.not_intersect_right_subtree(search_node)) {
+                return this.tree_search_first_interval(node.right, search_node);
+            }
+        }
+
+        return null;
     }
 
     /**

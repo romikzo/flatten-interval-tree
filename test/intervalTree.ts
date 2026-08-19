@@ -318,6 +318,39 @@ describe('#IntervalTree', function() {
         tree.remove([2,5], data[0]);
         expect(tree.exist([2, 5], data[0])).to.be.false;
     })
+    it('Selects the same lower bound regardless of insertion history', () => {
+        const histories = [
+            [
+                [0, 0],
+                [1, 100],
+                [5, 5],
+                [7, 7],
+                [9, 9],
+            ],
+            [
+                [0, 0],
+                [5, 5],
+                [7, 7],
+                [1, 100],
+                [9, 9],
+            ],
+        ] satisfies [number, number][][];
+        const firstKeys = histories.map(history => {
+            const tree = new IntervalTree<string>();
+            for (const [low, high] of history) {
+                tree.insert([low, high], `${low.toString()},${high.toString()}`);
+            }
+            return tree.iterate(
+                new Interval(6, 6),
+                (_value, interval) => [interval.low, interval.high]
+            ).next().value;
+        });
+
+        expect(firstKeys).to.deep.equal([
+            [1, 100],
+            [1, 100],
+        ]);
+    })
     describe('##Iterator', function() {
         it('May find first intersecting interval', function () {
             let tree = new IntervalTree<[number, number]>();
